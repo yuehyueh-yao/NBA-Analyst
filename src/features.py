@@ -148,11 +148,16 @@ def add_head_to_head(games: pd.DataFrame) -> pd.Series:
     winner = np.where(g[config.LABEL] == 1, g["HOME_TEAM_ID"], g["VISITOR_TEAM_ID"])
     g["_teamA_win"] = (winner == g["_teamA"]).astype(int)
 
-    # 每個配對，teamA 在先前交手的勝率
+    # 每個配對，teamA 在先前交手的勝率。
+    # 注意：groupby(...).apply(...) 的結果是「依 pair 分組」的排列（index label
+    # 保留原列號，但底層陣列已按組重排）。下方 np.where 依「位置」取值、不做
+    # index 對齊，故必須先 reindex 回 g 的原始列順序，否則會把某列的值錯套到
+    # 另一列，導致整欄 h2h 亂序（並破壞「附加未來比賽不影響既有列」的防洩漏性質）。
     teamA_prior = (
         g.groupby("_pair", sort=False)["_teamA_win"]
         .apply(lambda s: s.shift(1).expanding().mean())
         .reset_index(level=0, drop=True)
+        .reindex(g.index)
     )
     # 主隊即 teamA 時直接用；否則取 1 - 該值
     home_is_teamA = g["HOME_TEAM_ID"] == g["_teamA"]
