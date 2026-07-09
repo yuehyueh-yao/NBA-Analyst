@@ -160,6 +160,79 @@ def add_head_to_head(games: pd.DataFrame) -> pd.Series:
     return pd.Series(h2h_home, index=g.index).reindex(games.index)
 
 
+def compute_elo(games: pd.DataFrame) -> pd.DataFrame:
+    """逐場計算標準 Elo 評分（賽前值）。
+
+    【防洩漏】對每場比賽，先讀出兩隊「目前」的 Elo 當作該場賽前特徵
+    （home_elo_pre / away_elo_pre / elo_prob_home），記錄完畢後才依該場
+    實際結果更新兩隊 Elo，供之後的比賽使用。因此任何一場比賽的賽前 Elo
+    只反映「該場之前」已結束的比賽；每隊在資料中第一次出現時，
+    賽前 Elo 必為 config.ELO_INITIAL。
+
+    跨賽季時，比賽前先將該隊的 Elo 往 config.ELO_INITIAL 回歸
+    （regress = config.ELO_SEASON_REGRESS）。
+
+    Returns:
+        以 GAME_ID 為 index 的資料框，欄位：
+        home_elo_pre, away_elo_pre, diff_elo, elo_prob_home。
+    """
+    g = games.sort_values("GAME_DATE_EST", kind="mergesort")
+    game_ids = g["GAME_ID"].values if "GAME_ID" in g.columns else g.index.values
+
+    ratings: dict = {}
+    last_season: dict = {}
+
+    n = len(g)
+    home_pre = np.empty(n, dtype=float)
+    away_pre = np.empty(n, dtype=float)
+    prob_home = np.empty(n, dtype=float)
+
+    home_ids = g["HOME_TEAM_ID"].values
+    away_ids = g["VISITOR_TEAM_ID"].values
+    seasons = g["SEASON"].values
+    results = g[config.LABEL].values
+
+    def _pre_rating(team_id, season) -> float:
+        """取得某隊在本場「之前」的 Elo（含跨賽季回歸），並更新 last_season。"""
+        if team_id not in ratings:
+            ratings[team_id] = config.ELO_INITIAL
+        elif last_season[team_id] != season:
+            ratings[team_id] = config.ELO_INITIAL + config.ELO_SEASON_REGRESS * (
+                ratings[team_id] - config.ELO_INITIAL
+            )
+        last_season[team_id] = season
+        return ratings[team_id]
+
+    for i in range(n):
+        home_id, away_id, season = home_ids[i], away_ids[i], seasons[i]
+
+        r_home = _pre_rating(home_id, season)
+        r_away = _pre_rating(away_id, season)
+
+        e_home = 1.0 / (1.0 + 10 ** ((r_away - (r_home + config.ELO_HOME_ADVANTAGE)) / 400.0))
+        s_home = float(results[i])
+
+        home_pre[i] = r_home
+        away_pre[i] = r_away
+        prob_home[i] = e_home
+
+        # 記錄完賽前值之後，才依本場結果更新兩隊 Elo（供之後的比賽使用）
+        ratings[home_id] = r_home + config.ELO_K * (s_home - e_home)
+        ratings[away_id] = r_away + config.ELO_K * ((1 - s_home) - (1 - e_home))
+
+    out = pd.DataFrame(
+        {
+            "home_elo_pre": home_pre,
+            "away_elo_pre": away_pre,
+            "elo_prob_home": prob_home,
+        },
+        index=game_ids,
+    )
+    out["diff_elo"] = out["home_elo_pre"] - out["away_elo_pre"]
+    out.index.name = "GAME_ID"
+    return out
+
+
 def build_features(games: pd.DataFrame) -> pd.DataFrame:
     """組出最終賽前特徵表（一場一列）。
 
@@ -190,6 +263,11 @@ def build_features(games: pd.DataFrame) -> pd.DataFrame:
             out[f"diff_{c}"] = out[f"home_{c}"] - out[f"away_{c}"]
 
     out["h2h_home_winrate"] = add_head_to_head(games).values
+
+    # Elo 評分（賽前值，防洩漏見 compute_elo docstring）
+    elo = compute_elo(games)
+    for c in elo.columns:
+        out[c] = elo[c]
 
     out = out.reset_index()
     out = out.sort_values("GAME_DATE_EST", kind="mergesort").reset_index(drop=True)

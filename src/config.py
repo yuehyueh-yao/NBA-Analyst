@@ -32,6 +32,7 @@ ROLL_WINDOWS = (5, 10)
 ELO_INITIAL = 1500.0
 ELO_K = 20.0
 ELO_HOME_ADVANTAGE = 100.0  # 主場優勢（Elo 分數）
+ELO_SEASON_REGRESS = 0.75  # 跨賽季回歸至平均的係數（開發③新增）
 
 # 隨機種子
 RANDOM_STATE = 42
