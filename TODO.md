@@ -40,27 +40,34 @@
 ## 開發③ — 結案（目標 07/16）
 
 ### Elo 特徵
-- [ ] `src/features.py` 加入 Elo：逐場更新、賽前 Elo、Elo 差值
-- [ ] 調整 K 值與主場優勢，驗證是否提升表現
+- [x] `src/features.py` 加入 Elo：逐場更新、賽前 Elo、Elo 差值、Elo 期望勝率（AUC 0.675→0.690）
+- [x] K 值/主場優勢/季間回歸（config），驗證提升表現
 
 ### 模型訓練與調校
-- [ ] `src/train.py`：時間切分 train/test、訓練 LogReg/DecisionTree/XGBoost
-- [ ] XGBoost 超參數調校、時序交叉驗證
-- [ ] 存最佳模型到 `models/`
+- [x] `src/train.py`：時間切分 train/test、訓練 LogReg/DecisionTree/XGBoost
+- [x] XGBoost 超參數調校、**時序交叉驗證（TimeSeriesSplit）**
+- [x] 存最佳模型到 `models/`（`load_or_train` 介面，含首次自動訓練）
 
 ### 評估
-- [ ] `src/evaluate.py`：多指標表 + 混淆矩陣、ROC、特徵重要度、校準圖
-- [ ] 產出 `reports/` 評估報告
+- [x] `src/evaluate.py`：多指標表 + 混淆矩陣、ROC、特徵重要度、校準圖
+- [x] 產出 `reports/` 評估報告
 
 ### 推論與 Demo
-- [ ] `src/predict.py`：共用 features，選兩隊組賽前特徵 → 輸出勝率
-- [ ] `app.py`：Streamlit 選主/客隊 → 勝率% + 勝負 + 關鍵特徵 + 資料來源頁籤
+- [x] `src/predict.py`：共用 features（合成比賽法，train/serve 一致）→ 輸出勝率 + 關鍵特徵
+- [x] `app.py`：Streamlit 選主/客隊 → 勝率% + 勝負 + 關鍵特徵 + 欄位定義/資料來源頁籤
 
 ### 測試
-- [ ] 特徵防洩漏單元測試
-- [ ] baseline 對照測試（模型 > baseline）
-- [ ] 推論冒煙測試
+- [x] 特徵防洩漏單元測試（**抓到並修正 add_head_to_head h2h 錯位 bug**）
+- [x] baseline 對照測試（模型 > baseline）
+- [x] 推論冒煙測試（全量 pytest 12/12 通過）
+
+### 部署（GitHub → Streamlit Community Cloud）
+- [x] 部署 scaffolding：精簡 requirements.txt + requirements-dev.txt + packages.txt + .streamlit/config.toml + README 部署段
+- [x] git init、raw CSV 納版控、gh CLI 安裝與認證、建立 repo `NBA-Analyst`
+- [ ] push 到 GitHub（待最終同意）
+- [ ] 在 Streamlit Cloud 部署並遠端驗證
 
 ### 交付
-- [ ] 完整程式碼、評估報告、Demo 簡報（含欄位定義與來源）
+- [x] 完整程式碼、評估報告
+- [ ] Demo 簡報（含欄位定義與來源）
 - [ ] 07/16 結案送審

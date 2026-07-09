@@ -11,11 +11,24 @@
 | 首次諮詢：定方向 | 06/21 | ✅ 已完成 |
 | 開發①：環境 + 方向討論 | 07/02 | ✅ 已完成 |
 | 開發②：第一階段送審（資料/EDA/指標/滾動特徵/baseline） | 07/09 | ✅ 已完成 |
-| 開發③：結案（Elo/建模調校/評估/Streamlit Demo） | 07/16 | ⬜ 尚未開始 |
+| 開發③：結案（Elo/建模調校/評估/Streamlit Demo） | 07/16 | ✅ 已完成（advisor-dispatch 派工開發） |
 
 ---
 
 ## 日誌
+
+### 2026-07-09（開發③：結案，以 advisor-dispatch 派工開發）
+- 🏗️ 主 session 當 advisor，把開發③ 拆成 6 張工單，派 sonnet subagent 在獨立 git worktree 平行實作、逐單 review、merge：
+  - A `features.py` 加 **Elo**（防洩漏，雙 verifier 通過）：AUC 0.675→0.690
+  - B `train.py`：LogReg/DecisionTree/XGBoost + **TimeSeriesSplit** 時序CV 調校；`load_or_train` 介面
+  - C `evaluate.py`：多指標 + 混淆矩陣/ROC/特徵重要度/校準圖 → reports/
+  - D `predict.py`：**合成比賽法**重用 build_features，train/serve 一致
+  - E `tests/`：防洩漏 / baseline 對照 / 推論冒煙（pytest 12 條）
+  - F `app.py`：Streamlit Demo（Cloud 部署友善，st.cache_resource）
+- 🐛 **E 的防洩漏測試抓到既有真 bug**：`add_head_to_head` 因 `groupby.apply` 為分組順序、`np.where` 位置對齊而錯位，`h2h_home_winrate` 96% 列錯誤。經 systematic-debugging 確認根因（hand-verify GAME 22000002 truth=0.5 vs 現行0.75），一行 `reindex` 修正。修正後 **全量 pytest 12/12 通過**、LogReg AUC 0.6908/Acc 0.6385。
+- 🚀 **部署準備**：精簡 requirements.txt + requirements-dev.txt + packages.txt(libgomp1) + .streamlit/config.toml + README 部署段；git init、raw CSV 納版控、.claude/ 排除；gh CLI 已裝並認證。
+- 📦 已建 GitHub repo `NBA-Analyst`(public)，**尚未 push**（待最終同意）。
+- ⏭️ 下一步：push 到 GitHub → Streamlit Community Cloud 部署 → 遠端驗證。
 
 ### 2026-07-09（開發②補強：進階特徵實驗）
 - ➕ `features.py` 加入淨得分差(pt_diff)滾動、EWMA 近況、單場命中率/助攻/籃板滾動能力
