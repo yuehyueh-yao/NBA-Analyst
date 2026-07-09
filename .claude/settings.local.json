@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pip install -r requirements.txt)",
+      "Bash(python -c \"import pandas,numpy,sklearn,xgboost,matplotlib,seaborn,streamlit; print\\('core OK'\\); import nba_api; print\\('nba_api OK'\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# 資料：原始 CSV 很小（<1MB）故納入版控，讓各 worktree/協作者都能直接讀取；
+# processed 特徵為衍生資料，可重生故忽略
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/raw/games.csv
+!data/raw/teams.csv
+!data/processed/.gitkeep
+
+# 模型與報告輸出
+models/*
+!models/.gitkeep
+reports/*.png
+reports/*.html
+
+# 系統
+.DS_Store
+Thumbs.db
+
+# Kaggle 憑證（切勿提交）
+kaggle.json

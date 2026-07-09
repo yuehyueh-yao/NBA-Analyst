@@ -1,0 +1,11 @@
+# NBA 對戰勝率預測 — 相依套件
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+xgboost>=2.0
+matplotlib>=3.7
+seaborn>=0.12
+streamlit>=1.30
+jupyter>=1.0
+# 加分補充：官方 stats.nba.com（免帳號抓最新賽季）
+nba_api>=1.4
