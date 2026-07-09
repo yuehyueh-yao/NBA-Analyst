@@ -27,3 +27,6 @@ Thumbs.db
 
 # Kaggle 憑證（切勿提交）
 kaggle.json
+
+# Claude Code 本機工作區設定（不進版控）
+.claude/
