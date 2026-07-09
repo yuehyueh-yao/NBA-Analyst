@@ -1,0 +1,6 @@
+# 開發、EDA、評估視覺化、資料下載所需（部署到 Streamlit Cloud 不需要這些）
+-r requirements.txt
+matplotlib>=3.7   # src/evaluate.py 診斷圖、notebooks
+seaborn>=0.12     # src/evaluate.py、EDA
+jupyter>=1.0      # notebooks/01_eda.ipynb
+nba_api>=1.4      # src/download_nba_api.py（重新抓資料時才需要）

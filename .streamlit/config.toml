@@ -1,0 +1,10 @@
+# Streamlit 設定（本機與 Cloud 皆適用）
+[theme]
+base = "light"
+primaryColor = "#1d428a"        # NBA 藍
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#1a1a1a"
+
+[server]
+headless = true

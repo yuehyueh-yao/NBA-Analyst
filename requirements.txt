@@ -1,11 +1,8 @@
-# NBA 對戰勝率預測 — 相依套件
+# App 執行時相依（Streamlit Cloud 部署用，維持精簡以加快建置）
+# app.py → predict → train → features → data_loader 這條鏈只需要以下套件：
+streamlit>=1.30
 pandas>=2.0
 numpy>=1.24
 scikit-learn>=1.3
 xgboost>=2.0
-matplotlib>=3.7
-seaborn>=0.12
-streamlit>=1.30
-jupyter>=1.0
-# 加分補充：官方 stats.nba.com（免帳號抓最新賽季）
-nba_api>=1.4
+# 開發/評估/資料下載額外工具見 requirements-dev.txt
