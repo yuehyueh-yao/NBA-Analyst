@@ -24,7 +24,7 @@ import streamlit as st
 from src import predict, train
 
 st.set_page_config(
-    page_title="NBA 賽前勝率預測",
+    page_title="NBA 新賽季開季勝率預測",
     page_icon="🏀",
     layout="centered",
 )
