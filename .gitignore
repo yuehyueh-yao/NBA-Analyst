@@ -18,6 +18,9 @@ data/processed/*
 # 模型與報告輸出
 models/*
 !models/.gitkeep
+# 例外：預訓練最佳模型 + 特徵清單納入版控，讓 Streamlit Cloud 免在雲端訓練、秒開
+!models/best_model.joblib
+!models/feature_columns.json
 reports/*.png
 reports/*.html
 
