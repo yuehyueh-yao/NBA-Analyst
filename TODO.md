@@ -64,8 +64,8 @@
 ### 部署（GitHub → Streamlit Community Cloud）
 - [x] 部署 scaffolding：精簡 requirements.txt + requirements-dev.txt + packages.txt + .streamlit/config.toml + README 部署段
 - [x] git init、raw CSV 納版控、gh CLI 安裝與認證、建立 repo `NBA-Analyst`
-- [ ] push 到 GitHub（待最終同意）
-- [ ] 在 Streamlit Cloud 部署並遠端驗證
+- [x] push 到 GitHub（含 8 季資料更新 + 預訓練模型，2026-07-19）
+- [~] 在 Streamlit Cloud 部署並遠端驗證（GitHub 端就緒，待在 share.streamlit.io 建立 App）
 
 ### 交付
 - [x] 完整程式碼、評估報告
