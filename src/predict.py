@@ -113,14 +113,27 @@ def _build_synthetic_game(
     home_id: int,
     away_id: int,
     date: Optional[Union[str, pd.Timestamp]],
-) -> tuple[pd.DataFrame, pd.Timestamp]:
-    """把待預測的比賽組成合成列，附加於 games 尾端；回傳 (合併後 games, 實際採用日期)。"""
-    if date is None:
-        resolved_date = games["GAME_DATE_EST"].max() + pd.Timedelta(days=1)
-    else:
-        resolved_date = pd.Timestamp(date)
+) -> tuple[pd.DataFrame, pd.Timestamp, int]:
+    """把待預測的比賽組成合成列，附加於 games 尾端；回傳 (合併後 games, 採用日期, 賽季)。
 
-    season = int(games["SEASON"].max())
+    【預設＝下一個新賽季開季】
+    當 date 省略時（App 的預設路徑），把合成比賽視為「資料中最新賽季的下一個
+    新賽季」開季戰：SEASON 取 max_season + 1、日期取該新賽季的代表開季日
+    （10/21 前後）。因為 features.compute_elo 的跨賽季回歸只依 SEASON 整數
+    是否改變觸發，這樣就會對兩隊套用一次跨季 Elo 回歸，反映「新賽季重新洗牌」
+    的開季基準（而非沿用上季末的即時戰力）。
+
+    當使用者明確傳入 date 時，維持舊行為：用該日期、賽季取 max_season，
+    代表「在既有賽季脈絡下」的一場比賽（向後相容）。
+    """
+    max_season = int(games["SEASON"].max())
+    if date is None:
+        season = max_season + 1
+        # 新賽季開季代表日；僅供顯示與時序排序，回歸與否只認 SEASON 值
+        resolved_date = pd.Timestamp(year=season, month=10, day=21)
+    else:
+        season = max_season
+        resolved_date = pd.Timestamp(date)
 
     synth = {c: np.nan for c in games.columns}
     synth.update(
@@ -138,7 +151,7 @@ def _build_synthetic_game(
     synth_row = pd.DataFrame([synth])[games.columns]
 
     all_games = pd.concat([games, synth_row], ignore_index=True)
-    return all_games, resolved_date
+    return all_games, resolved_date, season
 
 
 def predict_matchup(
@@ -155,8 +168,9 @@ def predict_matchup(
 
     Returns:
         dict，含 home_team/away_team（顯示名）、home_win_prob/away_win_prob、
-        predicted_winner（"home"/"away"）、threshold、key_features（賽前
-        關鍵特徵與其數值的清單，供 app 做可解讀呈現）。
+        predicted_winner（"home"/"away"）、threshold、season_label（如
+        "2026-27"，代表這是哪個賽季的開季預測）、key_features（賽前關鍵特徵
+        與其數值的清單，供 app 做可解讀呈現）。
     """
     home_id = resolve_team(home)
     away_id = resolve_team(away)
@@ -164,7 +178,7 @@ def predict_matchup(
         raise ValueError("主隊與客隊不可相同")
 
     games = data_loader.load_games()
-    all_games, resolved_date = _build_synthetic_game(games, home_id, away_id, date)
+    all_games, resolved_date, season = _build_synthetic_game(games, home_id, away_id, date)
 
     feats = features.build_features(all_games)
     synth_row = feats[feats["GAME_ID"] == _SYNTHETIC_GAME_ID]
@@ -193,6 +207,7 @@ def predict_matchup(
         "home_team_id": home_id,
         "away_team_id": away_id,
         "date": str(resolved_date.date()),
+        "season_label": f"{season}-{str(season + 1)[-2:]}",
         "home_win_prob": home_win_prob,
         "away_win_prob": away_win_prob,
         "predicted_winner": predicted_winner,

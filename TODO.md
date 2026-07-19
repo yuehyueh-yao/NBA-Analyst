@@ -71,3 +71,17 @@
 - [x] 完整程式碼、評估報告
 - [ ] Demo 簡報（含欄位定義與來源）
 - [ ] 07/16 結案送審
+
+---
+
+## 開發④ — 資料更新至 2025-26 + 新賽季開季預測（07/19）
+
+設計：`docs/superpowers/specs/2026-07-19-refresh-data-2025-newseason-prediction-design.md`
+
+- [x] 重抓 8 季（2018–2025）共 9509 場（新增 2024-25、2025-26）
+- [x] `config.py`：`TEST_SEASON_START` 2021→2024
+- [x] `predict.py`：預設改新賽季開季（`SEASON=max+1`、跨季 Elo 回歸）、回傳 `season_label`
+- [x] `app.py`：文案改 2026-27 開季自選對戰組合預測、顯示賽季標籤、8 季說明
+- [x] 重新訓練（最佳 LogReg，ROC-AUC 0.7292）
+- [x] 重生評估報告（reports/）
+- [x] pytest 全綠、predict 冒煙驗證跨季回歸生效

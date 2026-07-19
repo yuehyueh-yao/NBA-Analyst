@@ -17,6 +17,16 @@
 
 ## 日誌
 
+### 2026-07-19（資料更新至 2025-26 + 新賽季開季預測）
+- ✅ 資料由 6 季（2018–2023）**更新為 8 季（2018–2025）**，共 **9509 場**，最後一場 2026-04-12
+- ✅ `config.py`：`TEST_SEASON_START` 2021→**2024**（train=2018–2023 共 7043 場、test=2024–2025 共 2450 場）
+- ✅ `predict.py`：預設預測改為 **2026-27 新賽季開季**（合成比賽 `SEASON=max+1`，觸發跨賽季 Elo 回歸＝真開季狀態）；回傳新增 `season_label`
+- ✅ `app.py`：文案改為「2026-27 開季自選對戰組合預測」（不依賽程），顯示賽季標籤，涵蓋 8 季說明
+- ✅ 重新訓練三模型：最佳 **Logistic Regression，ROC-AUC 0.7292 / Accuracy 0.6784**（測試集 2024–2025）
+- ✅ 重生 `reports/`：evaluation_metrics.csv + 混淆矩陣/ROC/特徵重要度/校準圖
+- ✅ 測試維持全綠（leakage / baseline / predict）
+- 📌 設計文件：[`docs/superpowers/specs/2026-07-19-refresh-data-2025-newseason-prediction-design.md`](docs/superpowers/specs/2026-07-19-refresh-data-2025-newseason-prediction-design.md)
+
 ### 2026-07-09（開發③：結案，以 advisor-dispatch 派工開發）
 - 🏗️ 主 session 當 advisor，把開發③ 拆成 6 張工單，派 sonnet subagent 在獨立 git worktree 平行實作、逐單 review、merge：
   - A `features.py` 加 **Elo**（防洩漏，雙 verifier 通過）：AUC 0.675→0.690

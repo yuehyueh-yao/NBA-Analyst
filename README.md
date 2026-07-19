@@ -1,6 +1,6 @@
 # NBA 對戰勝率預測
 
-以歷史 NBA 賽事的結構型資料，建立**賽前勝率預測模型**：比賽開打前選定對戰兩隊，輸出主隊獲勝機率與勝負判定。成果以 Streamlit 互動 Demo 呈現。
+以歷史 NBA 賽事的結構型資料（2018–2025 共 8 個賽季例行賽），建立**賽前勝率預測模型**：比賽開打前選定對戰兩隊，輸出主隊獲勝機率與勝負判定。Streamlit Demo 以此預測 **2026-27 新賽季開季**的自選對戰組合（不依賽程，開季實力套用跨賽季 Elo 回歸）。
 
 > 課程：AI-10 結構型資料的分析案例 · 執行者：姚玥樂 · 講師：Alex Huang
 > 完整設計見 [`docs/superpowers/specs/2026-07-02-nba-win-prediction-design.md`](docs/superpowers/specs/2026-07-02-nba-win-prediction-design.md)
@@ -67,7 +67,7 @@ pip install -r requirements.txt
 
 **B. nba_api（免帳號）** — 直接從官方 stats.nba.com 抓
 ```bash
-python -m src.download_nba_api --seasons 2018 2019 2020 2021 2022
+python -m src.download_nba_api --seasons 2018 2019 2020 2021 2022 2023 2024 2025
 ```
 
 兩者皆輸出符合欄位規格的 `data/raw/games.csv` 與 `data/raw/teams.csv`。

@@ -23,7 +23,8 @@ FEATURES_CSV = PROCESSED_DIR / "features.csv"
 LABEL = "HOME_TEAM_WINS"
 
 # 時序切分：此賽季（含）以後作為測試集，之前作為訓練集
-TEST_SEASON_START = 2021
+# 資料涵蓋 2018–2025 共 8 季後，切在 2024：train=2018–2023（6 季）、test=2024–2025（2 季）
+TEST_SEASON_START = 2024
 
 # 滾動窗口
 ROLL_WINDOWS = (5, 10)

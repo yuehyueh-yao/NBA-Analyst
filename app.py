@@ -79,10 +79,12 @@ def load_teams_cached() -> pd.DataFrame:
 
 
 def main() -> None:
-    st.title("🏀 NBA 賽前勝率預測 Demo")
+    st.title("🏀 NBA 新賽季開季勝率預測 Demo")
     st.caption(
-        "輸入主隊、客隊，模型會依「賽前可得」的特徵（Elo、近況、賽季戰績、"
-        "對戰歷史等）預測主隊獲勝機率。資料來源：nba_api（官方 stats.nba.com）。"
+        "以截至 2025-26 賽季（共 8 季例行賽）的資料，預測 **2026-27 新賽季開季** 的"
+        "假想對戰：自行選擇主隊、客隊組合（不依賽程），模型會依「賽前可得」的特徵"
+        "（Elo、近況、賽季戰績、對戰歷史等）計算主隊獲勝機率。開季實力已套用跨賽季"
+        " Elo 回歸（反映新賽季重新洗牌）。資料來源：nba_api（官方 stats.nba.com）。"
     )
 
     # 首次載入需要訓練模型（models/ 在 Cloud 上不存在），給使用者提示。
@@ -136,7 +138,9 @@ def main() -> None:
 
     st.divider()
     st.subheader(f"{result['home_team']}（主）vs {result['away_team']}（客）")
-    st.caption(f"預測日期：{result['date']}　｜　判定門檻：{result['threshold']:.0%}")
+    st.caption(
+        f"{result['season_label']} 賽季開季預測　｜　判定門檻：{result['threshold']:.0%}"
+    )
 
     home_prob = result["home_win_prob"]
     away_prob = result["away_win_prob"]
@@ -186,7 +190,7 @@ def main() -> None:
     with st.expander("欄位定義與資料來源"):
         st.markdown(
             """
-**資料來源**：nba_api（官方 stats.nba.com），涵蓋 6 個賽季的例行賽對戰紀錄。
+**資料來源**：nba_api（官方 stats.nba.com），涵蓋 8 個賽季（2018–2025）的例行賽對戰紀錄。
 
 **主要特徵欄位說明**（皆為「賽前可得」資料，計算時嚴格只使用比賽當日之前
 已結束的比賽，杜絕資料洩漏）：
