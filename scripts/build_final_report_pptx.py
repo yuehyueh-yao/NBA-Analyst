@@ -1027,7 +1027,8 @@ def build_demo_deploy(prs, facts) -> None:
         "requirements.txt（App 執行）／requirements-dev.txt（開發）分離",
         "預訓練模型 models/best_model.joblib 納入版控，"
         "Cloud 端免現場訓練、秒開",
-        "Streamlit Community Cloud 部署進行中",
+        "已部署至 Streamlit Community Cloud：\n"
+        "nba-analyst-ktgfbnvixska5ghseefnm8.streamlit.app",
     ], size=13)
 
     add_footer(slide, "Demo 與部署")

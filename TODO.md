@@ -65,11 +65,11 @@
 - [x] 部署 scaffolding：精簡 requirements.txt + requirements-dev.txt + packages.txt + .streamlit/config.toml + README 部署段
 - [x] git init、raw CSV 納版控、gh CLI 安裝與認證、建立 repo `NBA-Analyst`
 - [x] push 到 GitHub（含 8 季資料更新 + 預訓練模型，2026-07-19）
-- [~] 在 Streamlit Cloud 部署並遠端驗證（GitHub 端就緒，待在 share.streamlit.io 建立 App）
+- [x] 在 Streamlit Cloud 部署（2026-10-30）：https://nba-analyst-ktgfbnvixska5ghseefnm8.streamlit.app/
 
 ### 交付
 - [x] 完整程式碼、評估報告
-- [ ] Demo 簡報（含欄位定義與來源）
+- [x] Demo 簡報（含欄位定義與來源）：reports/nba-win-prediction-final-report.pptx（18 頁）
 - [ ] 07/16 結案送審
 
 ---
