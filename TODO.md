@@ -69,7 +69,7 @@
 
 ### 交付
 - [x] 完整程式碼、評估報告
-- [x] Demo 簡報（含欄位定義與來源）：reports/nba-win-prediction-final-report.pptx（18 頁）
+- [x] Demo 簡報（含欄位定義與來源）：reports/姚玥樂_第二階段結案報告_NBA Analyst.pptx（21 頁）
 - [ ] 07/16 結案送審
 
 ---

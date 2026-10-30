@@ -4,7 +4,7 @@
     python -m pip install -r requirements-dev.txt   # 首次執行需要 python-pptx
     python scripts/build_final_report_pptx.py
 
-輸出：reports/nba-win-prediction-final-report.pptx（16:9，18 頁）
+輸出：reports/姚玥樂_第二階段結案報告_NBA Analyst.pptx（16:9，21 頁）
 
 【資料來源與數字口徑】
     本腳本文字中出現的所有數字，均取自 repo 既有事實來源，不憑空捏造：
@@ -60,9 +60,14 @@ SLIDE_H_IN = 7.5
 MARGIN = 0.6
 
 REPORTS_DIR = ROOT / "reports"
-OUT_PATH = REPORTS_DIR / "nba-win-prediction-final-report.pptx"
+OUT_PATH = REPORTS_DIR / "姚玥樂_第二階段結案報告_NBA Analyst.pptx"
+DEMO_SHOTS_DIR = REPORTS_DIR / "demo_screenshots"
 
-TOTAL_SLIDES = 18
+REPORT_DATE = "2026-10-30"
+GITHUB_URL = "https://github.com/yuehyueh-yao/NBA-Analyst"
+DEMO_URL = "https://nba-analyst-ktgfbnvixska5ghseefnm8.streamlit.app/"
+
+TOTAL_SLIDES = 21
 _page_counter = {"n": 0}
 
 
@@ -324,6 +329,54 @@ def add_image_fit(slide, path, box_x, box_y, box_w, box_h) -> None:
     return pic
 
 
+def fmt_cell(cell, text, size, color, bold=False, fill_hex=None, fill_alpha=None, align=PP_ALIGN.CENTER,
+             font=None):
+    cell.margin_left = Inches(0.08)
+    cell.margin_right = Inches(0.08)
+    cell.margin_top = Inches(0.02)
+    cell.margin_bottom = Inches(0.02)
+    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+    if fill_hex is not None:
+        if fill_alpha is not None:
+            set_fill_alpha(cell, fill_hex, fill_alpha)
+        else:
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = _rgb(fill_hex)
+    else:
+        cell.fill.background()
+    tf = cell.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.alignment = align
+    r = p.add_run()
+    r.text = text
+    if font is None:
+        font = FONT_NUM if any(ch.isdigit() for ch in text) else FONT_CJK
+    style_run(r, size, color, bold=bold, font=font)
+
+
+def add_text_table(slide, x, y, w, header, rows, col_ratio, row_h=0.42, size=11.5,
+                   header_size=12.5, row_colors=None):
+    """深色底上的文字表格：橘色表頭 + 白色低透明度資料列；回傳表格高度。"""
+    n_rows = len(rows) + 1
+    gframe = slide.shapes.add_table(n_rows, len(header), Inches(x), Inches(y),
+                                    Inches(w), Inches(row_h * n_rows))
+    table = gframe.table
+    for i, ratio in enumerate(col_ratio):
+        table.columns[i].width = Inches(w * ratio)
+    for r in range(n_rows):
+        table.rows[r].height = Inches(row_h)
+    for c, name in enumerate(header):
+        fmt_cell(table.cell(0, c), name, header_size, NAVY, bold=True, fill_hex=ORANGE,
+                 align=PP_ALIGN.LEFT, font=FONT_CJK)
+    for r_i, row in enumerate(rows, start=1):
+        for c_i, text in enumerate(row):
+            color = (row_colors or {}).get((r_i - 1, c_i), TEXT_PRIMARY)
+            fmt_cell(table.cell(r_i, c_i), text, size, color, bold=(c_i == 0),
+                     fill_hex=CARD_FILL_HEX, fill_alpha=6, align=PP_ALIGN.LEFT, font=FONT_CJK)
+    return row_h * n_rows
+
+
 def add_stat(slide, x, y, w, value: str, label: str, value_size=34, label_size=11,
              value_color=ORANGE, align=PP_ALIGN.LEFT) -> None:
     _, tf = new_textbox(slide, x, y, w, 0.6)
@@ -369,7 +422,7 @@ def build_cover(prs, facts) -> None:
     metas = [
         ("執行者", "姚玥樂"),
         ("講師", "Alex Huang"),
-        ("日期", "2026-08-06"),
+        ("日期", REPORT_DATE),
         ("交付", "GitHub · Streamlit Cloud"),
     ]
     col_w = (SLIDE_W_IN - 2 * MARGIN) / 4
@@ -393,11 +446,11 @@ def build_agenda(prs, facts) -> None:
     add_title_block(slide, "AGENDA", "大綱")
 
     groups = [
-        ("01", "問題定義與資料", "目標、成功標準／baseline、資料來源與 EDA"),
+        ("01", "問題定義與資料", "目標、成功標準／baseline、資料來源、欄位定義與 EDA"),
         ("02", "特徵工程", "43 個賽前特徵、防洩漏三鐵律、Elo 設計與實驗取捨"),
         ("03", "建模與評估", "三模型調校、六指標總表、四張診斷圖"),
         ("04", "工程品質與推論", "pytest 防洩漏測試、抓到的真 bug、合成比賽推論法"),
-        ("05", "Demo、部署與未來", "Streamlit Demo、GitHub → Streamlit Cloud、下一步規劃"),
+        ("05", "Demo、成果與未來", "Streamlit Demo 實際畫面、提案目標 → 實際成果、下一步規劃"),
     ]
     y = 1.85
     h = 0.92
@@ -532,6 +585,101 @@ def build_data(prs, facts) -> None:
     ], size=12.5)
 
     add_footer(slide, "資料來源與規模")
+
+
+def build_field_defs(prs, facts) -> None:
+    slide = new_slide(prs)
+    add_title_block(slide, "01 · 欄位定義", "欄位定義與資料來源")
+
+    src_games = "games.csv"
+    rows = [
+        ("GAME_ID", "比賽唯一編號", src_games),
+        ("GAME_DATE_EST", "比賽日期（美東時間）；時序排序與「賽前」切點的依據", src_games),
+        ("SEASON", "賽季起始年（例：2025 = 2025-26 賽季）", src_games),
+        ("HOME_TEAM_ID／VISITOR_TEAM_ID", "主隊／客隊的球隊 ID", src_games),
+        ("PTS_home／PTS_away", "主隊／客隊得分；只用來計算「過去比賽」的滾動統計與 Elo，不當作當場特徵",
+         src_games),
+        ("FG_PCT／FT_PCT／FG3_PCT／AST／REB", "投籃／罰球／三分命中率、助攻、籃板（進階實驗用，預設關閉）",
+         src_games),
+        ("HOME_TEAM_WINS", "預測標籤：主隊贏 = 1、輸 = 0", "games.csv（由主隊勝負 WL 轉換）"),
+        ("TEAM_ID／ABBREVIATION／FULL_NAME", "球隊 ID、縮寫、全名（Demo 下拉選單使用）",
+         "teams.csv"),
+        (f"賽前特徵（{facts['n_features']} 欄）",
+         "例：diff_elo（Elo 差）、elo_prob_home（Elo 期望勝率）、home_winrate_last10（近 10 場勝率）",
+         "src/features.py 由上列欄位計算（shift(1) 只用賽前資料）"),
+    ]
+    w = SLIDE_W_IN - 2 * MARGIN
+    h = add_text_table(slide, MARGIN, 1.8, w, ["欄位名稱", "代表什麼", "資料來源"], rows,
+                       [0.27, 0.48, 0.25], row_h=0.44, size=11)
+
+    _, tf = new_textbox(slide, MARGIN, 1.8 + h + 0.15, w, 0.35)
+    r = tf.paragraphs[0].add_run()
+    r.text = ("資料來源：games.csv ← nba_api LeagueGameLog（stats.nba.com 官方例行賽）；teams.csv ← nba_api static teams。"
+              "完整 43 個特徵清單見 models/feature_columns.json")
+    style_run(r, 11, TEXT_SECONDARY, italic=True)
+
+    add_footer(slide, "欄位定義與資料來源")
+
+
+def build_demo_screens(prs, facts) -> None:
+    slide = new_slide(prs)
+    add_title_block(slide, "05 · Demo 畫面", "Demo 實際操作畫面")
+
+    y = 1.85
+    box_h = 4.55
+    col_w = (SLIDE_W_IN - 2 * MARGIN - 0.3) / 2
+    shots = [
+        ("demo_predict.png", "① 選 Boston Celtics（主）vs Los Angeles Lakers（客）→ 按「預測比賽結果」→ 雙方勝率與預測勝方"),
+        ("demo_key_features.png", "② 關鍵特徵表：Elo 期望勝率、Elo 差、近況與對戰歷史，解讀這次預測"),
+    ]
+    for i, (fname, caption) in enumerate(shots):
+        x = MARGIN + i * (col_w + 0.3)
+        add_card(slide, x, y, col_w, box_h)
+        add_image_fit(slide, DEMO_SHOTS_DIR / fname, x + 0.15, y + 0.15, col_w - 0.3, box_h - 0.3)
+        _, tf = new_textbox(slide, x, y + box_h + 0.1, col_w, 0.5)
+        r = tf.paragraphs[0].add_run()
+        r.text = caption
+        style_run(r, 11.5, TEXT_SECONDARY)
+
+    add_footer(slide, "Demo 實際畫面")
+
+
+def build_proposal_vs_result(prs, facts) -> None:
+    slide = new_slide(prs)
+    add_title_block(slide, "05 · 提案對照", "提案目標 → 實際成果")
+
+    comp = facts["comparison"]
+    best_name = comp["ROC-AUC"].idxmax()
+    best_acc = comp.loc[best_name, "Accuracy"] * 100
+    best_auc = comp.loc[best_name, "ROC-AUC"]
+    baseline = facts["baseline_test_acc"] * 100
+
+    done, adjusted, delayed, bonus = "✔ 完成", "△ 調整", "△ 延後", "＋ 加分"
+    rows = [
+        ("業務問題", "賽前預測主隊是否獲勝（二元分類）＋勝率", "HOME_TEAM_WINS 二元分類，輸出勝率與勝負判定", done),
+        ("資料來源", "Kaggle NBA games 為主、nba_api 補充",
+         f"全面改用 nba_api（免帳號、可更新到最新）：{facts['season_min']}–{facts['season_max']} "
+         f"共 8 季 {facts['n_games']:,} 場", adjusted),
+        ("特徵工程", "近期戰績、得失分、休息天數、賽季勝率、進階數據",
+         f"{facts['n_features']} 個賽前特徵＋Elo；進階 box-score 經實驗為雜訊、預設關閉", done),
+        ("Baseline", "主場必勝、多數類別", f"測試集主場必勝 baseline {baseline:.2f}%", done),
+        ("模型與調參", "LogReg／Decision Tree／XGBoost＋交叉驗證",
+         "三模型完成；XGBoost 以 TimeSeriesSplit 時序 CV 調參", done),
+        ("評估", "Accuracy／Precision／Recall／F1／ROC-AUC／Log-loss", "六指標總表＋四張診斷圖", done),
+        ("成功標準", "ROC-AUC 與準確率明顯優於基線",
+         f"{best_name}：Accuracy {best_acc:.2f}%（{best_acc - baseline:+.2f} pp）、ROC-AUC {best_auc:.4f}", done),
+        ("交付物", "訓練／推論程式碼、評估報告、Streamlit Demo",
+         "GitHub 公開 repo、reports/、Streamlit Cloud 線上 Demo", done),
+        ("額外成果", "（提案未列）", "pytest 12 條測試、資料更新至 2025-26、2026-27 開季預測", bonus),
+        ("時程", "07/16 繳交結案報告", "程式 07/09–07/19 完成；結案報告 10/30 送審", delayed),
+    ]
+    status_color = {done: "4ADE80", adjusted: ORANGE, delayed: ORANGE, bonus: "60A5FA"}
+    colors = {(i, 3): status_color[row[3]] for i, row in enumerate(rows)}
+    w = SLIDE_W_IN - 2 * MARGIN
+    add_text_table(slide, MARGIN, 1.75, w, ["項目", "第一階段提案", "實際成果", "狀態"], rows,
+                   [0.12, 0.33, 0.45, 0.10], row_h=0.44, size=10.5, row_colors=colors)
+
+    add_footer(slide, "提案目標 → 實際成果")
 
 
 def build_eda(prs, facts) -> None:
@@ -814,30 +962,8 @@ def build_eval_table(prs, facts) -> None:
     for r in range(n_rows):
         table.rows[r].height = Inches(row_h)
 
-    def _fmt_cell(cell, text, size, color, bold=False, fill_hex=None, fill_alpha=None, align=PP_ALIGN.CENTER):
-        cell.margin_left = Inches(0.08)
-        cell.margin_right = Inches(0.08)
-        cell.margin_top = Inches(0.02)
-        cell.margin_bottom = Inches(0.02)
-        cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-        if fill_hex is not None:
-            if fill_alpha is not None:
-                set_fill_alpha(cell, fill_hex, fill_alpha)
-            else:
-                cell.fill.solid()
-                cell.fill.fore_color.rgb = _rgb(fill_hex)
-        else:
-            cell.fill.background()
-        tf = cell.text_frame
-        tf.word_wrap = True
-        p = tf.paragraphs[0]
-        p.alignment = align
-        r = p.add_run()
-        r.text = text
-        style_run(r, size, color, bold=bold, font=(FONT_NUM if any(ch.isdigit() for ch in text) else FONT_CJK))
-
     for c, name in enumerate(cols):
-        _fmt_cell(table.cell(0, c), name, 13, "0B1F3A", bold=True, fill_hex=ORANGE,
+        fmt_cell(table.cell(0, c), name, 13, "0B1F3A", bold=True, fill_hex=ORANGE,
                   align=(PP_ALIGN.LEFT if c == 0 else PP_ALIGN.CENTER))
 
     metric_cols = ["Accuracy", "Precision", "Recall", "F1", "ROC-AUC", "LogLoss"]
@@ -850,7 +976,7 @@ def build_eval_table(prs, facts) -> None:
         fill_alpha = 16 if is_best else 6
         name_color = ORANGE if is_best else TEXT_PRIMARY
         label = model_name + ("  ★ 最佳" if is_best else "")
-        _fmt_cell(table.cell(r_i, 0), label, 13, name_color, bold=is_best,
+        fmt_cell(table.cell(r_i, 0), label, 13, name_color, bold=is_best,
                   fill_hex=fill_hex, fill_alpha=fill_alpha, align=PP_ALIGN.LEFT)
         for c_i, mc in enumerate(metric_cols, start=1):
             val = row[mc]
@@ -858,7 +984,7 @@ def build_eval_table(prs, facts) -> None:
                 text = f"{val*100:.2f}%"
             else:
                 text = f"{val:.4f}"
-            _fmt_cell(table.cell(r_i, c_i), text, 13, TEXT_PRIMARY, bold=is_best,
+            fmt_cell(table.cell(r_i, c_i), text, 13, TEXT_PRIMARY, bold=is_best,
                       fill_hex=fill_hex, fill_alpha=fill_alpha)
 
     _, tf_note = new_textbox(slide, MARGIN, y + table_h + 0.25, w, 0.4)
@@ -1023,12 +1149,11 @@ def build_demo_deploy(prs, facts) -> None:
     _, tf2 = new_textbox(slide, MARGIN + 7.2 + 0.3, y + 0.3, 4.15, 3.7)
     add_card_title(tf2, "交付與部署", color=ORANGE)
     add_bullets(tf2, [
-        "GitHub repo：NBA-Analyst（public）",
+        "程式碼（GitHub，public）：" + GITHUB_URL,
+        "線上 Demo（Streamlit Community Cloud）：" + DEMO_URL,
         "requirements.txt（App 執行）／requirements-dev.txt（開發）分離",
         "預訓練模型 models/best_model.joblib 納入版控，"
         "Cloud 端免現場訓練、秒開",
-        "已部署至 Streamlit Community Cloud：\n"
-        "nba-analyst-ktgfbnvixska5ghseefnm8.streamlit.app",
     ], size=13)
 
     add_footer(slide, "Demo 與部署")
@@ -1104,6 +1229,7 @@ def main() -> None:
         build_goal,
         build_baseline,
         build_data,
+        build_field_defs,
         build_eda,
         build_features_overview,
         build_leakage,
@@ -1116,6 +1242,8 @@ def main() -> None:
         build_engineering,
         build_inference,
         build_demo_deploy,
+        build_demo_screens,
+        build_proposal_vs_result,
         build_future_conclusion,
     ]
     for fn in builders:
